@@ -1,3 +1,2 @@
 def app(action):
-    pass
-
+    print(action)
