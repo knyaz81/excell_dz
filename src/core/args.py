@@ -1,12 +1,14 @@
 import argparse
 
+from . import settings
+
 args_parser =  argparse.ArgumentParser()
 
 args_parser.add_argument(
     'action', type=str, nargs='?', default='help',
     help=(
-        'Action to execute, required positional argument. Use: '
-        'generate, initdb, checkdb'
+        "Action to execute, required positional argument. Use: "
+        f"{', '.join(settings.ACTIONS)}"
     )
 )
 
