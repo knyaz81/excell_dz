@@ -3,3 +3,5 @@
 
 # Working trash
 *.xlsx
+__pycache__
+*.py[c,d]
