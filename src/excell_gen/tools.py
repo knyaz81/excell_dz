@@ -19,19 +19,19 @@ class ExcellGenTools:
     CATEGORIES = {
         'TV': {
             'name': 'TV',
-            'attrs': ['weight', 'diagonal']
+            'attrs': ['Weight', 'Diagonal']
         },
         'Camera': {
             'name': 'CAM',
-            'attrs': ['weight', 'number of pixels']
+            'attrs': ['Weight', 'Number of pixels']
         },
         'Dysplay': {
             'name': 'DS',
-            'attrs': ['diagonal', 'resolution', 'screen ratio']
+            'attrs': ['Diagonal', 'Resolution', 'Screen ratio']
         },
         'Mobile': {
             'name': 'MOB',
-            'attrs': ['diagonal', 'ROM']
+            'attrs': ['Diagonal', 'ROM']
         },
     }
 
@@ -45,35 +45,37 @@ class ExcellGenTools:
     ]
 
     ATTRS = {
-        'weight': {
+        'Weight': {
             'rand_func': lambda: '{:.2f}kg'.format(random.random()*10),
             'col_width': 0,
-        }
-        'diagonal': {
+        },
+        'Diagonal': {
             'rand_func': lambda: '{}"'.format(random.randint(6, 42)),
             'col_width': 0,
         },
-        'number of pixels': {
+        'Number of pixels': {
             'rand_func': lambda: '{}MP'.format(random.randint(30, 300) / 10),
-            'col_width': 0,
+            'col_width': 18,
         },
-        'resolution': {
+        'Resolution': {
             'rand_func': lambda: '{}'.format(random.choice(_RESOLUTION)),
-            'col_width': 0,
+            'col_width': 20,
         },
-        'screen ratio': {
+        'Screen ratio': {
             'rand_func': lambda: '{}'.format(random.choice(_RATIO)),
-            'col_width': 0,
+            'col_width': 18,
         },
         'ROM': {
-            'rand_func': lambda: f'{}GB'.format(pow(2, random.randint(3, 9))),
+            'rand_func': lambda: '{}GB'.format(pow(2, random.randint(3, 9))),
             'col_width': 0,
         },
     }
 
-    PRODUCT = [
-        'article',
-        'brand',
-        'name',
-        'price',
+    PRODUCTS = [
+        'Article',
+        'Brand',
+        'Name',
+        'Price',
     ]
+
+    COLUMNS = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
