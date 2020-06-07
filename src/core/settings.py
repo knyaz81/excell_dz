@@ -1,8 +1,6 @@
 ## Program modes
 ACTIONS = [
     'generate',
-    'initdb',
-    'checkdb',
 ]
 
 ## Postgres config

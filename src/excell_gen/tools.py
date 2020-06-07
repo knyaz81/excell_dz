@@ -1,4 +1,5 @@
 import random
+from string import ascii_uppercase
 
 _RATIO = ['11:9', '16:10', '16:9', '19:10', '21:9', '25:16', '3:2', '4:3', '5:3', '5:4', '64:27']
 
@@ -15,23 +16,24 @@ class ExcellGenTools:
     CAT_NAME = 'name'
     RANDOM_VALUE_FUNC = 'rand_func'
     COLUMN_WIDTH = 'col_width'
+    _current_article = 0
 
     CATEGORIES = {
         'TV': {
             'name': 'TV',
-            'attrs': ['Weight', 'Diagonal']
+            'attrs': ['Weight', 'Diagonal'],
         },
         'Camera': {
             'name': 'CAM',
-            'attrs': ['Weight', 'Number of pixels']
+            'attrs': ['Weight', 'Number of pixels'],
         },
         'Dysplay': {
             'name': 'DS',
-            'attrs': ['Diagonal', 'Resolution', 'Screen ratio']
+            'attrs': ['Diagonal', 'Resolution', 'Screen ratio'],
         },
         'Mobile': {
             'name': 'MOB',
-            'attrs': ['Diagonal', 'ROM']
+            'attrs': ['Diagonal', 'ROM'],
         },
     }
 
@@ -55,15 +57,15 @@ class ExcellGenTools:
         },
         'Number of pixels': {
             'rand_func': lambda: '{}MP'.format(random.randint(30, 300) / 10),
-            'col_width': 18,
+            'col_width': 15,
         },
         'Resolution': {
             'rand_func': lambda: '{}'.format(random.choice(_RESOLUTION)),
-            'col_width': 20,
+            'col_width': 15,
         },
         'Screen ratio': {
             'rand_func': lambda: '{}'.format(random.choice(_RATIO)),
-            'col_width': 18,
+            'col_width': 11,
         },
         'ROM': {
             'rand_func': lambda: '{}GB'.format(pow(2, random.randint(3, 9))),
@@ -71,11 +73,56 @@ class ExcellGenTools:
         },
     }
 
-    PRODUCTS = [
-        'Article',
-        'Brand',
-        'Name',
-        'Price',
-    ]
+    PRODUCTS = {
+        'Article': {
+            'col_width': 14,
+        },
+        'Brand': {
+            'col_width': 11,
+        },
+        'Name': {
+            'col_width': 30,
+        },
+        'Price': {
+            'col_width': 11,
+        },
+    }
 
     COLUMNS = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+
+    @classmethod
+    def get_column_width(cls, atr):
+        if atr in cls.ATTRS:
+            return cls.ATTRS[atr][cls.COLUMN_WIDTH]
+        return cls.PRODUCTS[atr][cls.COLUMN_WIDTH]
+
+    @classmethod
+    def get_attribute_list(cls, category):
+        return cls.CATEGORIES[category][cls.ATRIBUT_LIST]
+
+    @classmethod
+    def get_article(cls):
+        cls._current_article += random.randint(1, 30)
+        return "A-{:0>8}".format(cls._current_article)
+
+    @classmethod
+    def get_brand(cls):
+        return random.choice(cls.BRANDS)
+
+    @classmethod
+    def get_name(cls, category, brand):
+        return "{brand}{index:0>6}{category}-{suffix}".format(
+            category=category,
+            brand=brand,
+            index=random.randint(123, 987654),
+            suffix=random.choice(ascii_uppercase) + random.choice(ascii_uppercase),
+        )
+
+    @classmethod
+    def get_price(cls):
+        return "{:.2f}$".format(random.randint(19999, 129999) / 100)
+
+    @classmethod
+    def get_atribute_value(cls, atr):
+        return cls.ATTRS[atr][cls.RANDOM_VALUE_FUNC]()
+
