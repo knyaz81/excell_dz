@@ -1,5 +1,9 @@
 ## Program modes
-ACTIONS = ['generate', 'initdb', 'checkdb',]
+ACTIONS = [
+    'generate',
+    'initdb',
+    'checkdb',
+]
 
 ## Postgres config
 PG_USER = 'excellparser'

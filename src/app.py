@@ -1,2 +1,5 @@
-def app(action):
-    print(action)
+ACTIONS = {}
+
+
+def app(cli_args):
+    print(cli_args)
