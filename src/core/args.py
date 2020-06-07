@@ -1,6 +1,6 @@
 import argparse
 
-from . import settings
+from .settings import ACTIONS
 
 args_parser =  argparse.ArgumentParser()
 
@@ -8,7 +8,7 @@ args_parser.add_argument(
     'action', type=str, nargs='?', default='help',
     help=(
         "Action to execute, required positional argument. Use: "
-        f"{', '.join(settings.ACTIONS)}"
+        f"{', '.join(ACTIONS)}"
     )
 )
 

@@ -1,8 +1,9 @@
 # My IDE
 /.vscode
 
-# Working trash
+# Work trash
 *.xlsx
 __pycache__
 *.py[c,d]
 /.database
+.~lock*
