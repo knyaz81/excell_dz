@@ -1,12 +1,23 @@
+import os.path
+
 ## Program modes
 ACTIONS = [
     'generate',
+    'parse_excell',
 ]
 
+BASE_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.abspath(__file__)
+    )
+)
+
 ## Postgres config
-PG_USER = 'excellparser'
-PG_PASS = 'excellparser'
-PG_HOST = 'localhost'
-PG_PORT = 5433
-PG_DB = 'excellparser'
-PG_INITDB = 'template1' # for drop PG_DB
+DB_CONFIG = {
+    'USER': 'excellparser',
+    'PASSWORD': 'excellparser',
+    'NAME': 'excellparser',
+    'INITDB_NAME': 'template1',
+    'HOST': 'localhost',
+    'PORT': 5433,
+}

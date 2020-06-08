@@ -26,20 +26,20 @@ class GeneratorXLSX:
     def _create_category_sheet(self, category, index):
         self.workbook.create_sheet(title=category, index=index)
         sheet = self.workbook[category]
-        for column, product_atr in enumerate(ExcellGenTools.PRODUCTS, start=2):
+        for column, product_attr in enumerate(ExcellGenTools.PRODUCTS, start=2):
             cell = sheet.cell(row=2, column=column)
-            cell.value = product_atr
+            cell.value = product_attr
             cell.font = self.title_font
-            column_width = ExcellGenTools.get_column_width(product_atr)
+            column_width = ExcellGenTools.get_column_width(product_attr)
             sheet.column_dimensions[ExcellGenTools.COLUMNS[column]].width = column_width
 
-        for column, adv_product_atr in enumerate(
+        for column, adv_product_attr in enumerate(
             ExcellGenTools.get_attribute_list(category), start=len(ExcellGenTools.CATEGORIES) + 2
         ):
             cell = sheet.cell(row=2, column=column)
-            cell.value = adv_product_atr
+            cell.value = adv_product_attr
             cell.font = self.title_font
-            column_width = ExcellGenTools.get_column_width(adv_product_atr)
+            column_width = ExcellGenTools.get_column_width(adv_product_attr)
             if column_width:
                 sheet.column_dimensions[ExcellGenTools.COLUMNS[column]].width = column_width
 
@@ -51,7 +51,7 @@ class GeneratorXLSX:
             sheet.cell(row=row, column=3).value = brand
             sheet.cell(row=row, column=4).value = ExcellGenTools.get_name(category, brand)
             sheet.cell(row=row, column=5).value = ExcellGenTools.get_price()
-            for column, adv_atr in enumerate(
+            for column, adv_attr in enumerate(
                 ExcellGenTools.get_attribute_list(category), start=len(ExcellGenTools.CATEGORIES) + 2
             ):
-                sheet.cell(row=row, column=column).value = ExcellGenTools.get_atribute_value(adv_atr)
+                sheet.cell(row=row, column=column).value = ExcellGenTools.get_attribute_value(adv_attr)

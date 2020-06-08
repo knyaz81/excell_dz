@@ -12,7 +12,7 @@ _RESOLUTION = [
  ]
 
 class ExcellGenTools:
-    ATRIBUT_LIST = 'attrs'
+    ATTRIBUT_LIST = 'attrs'
     CAT_NAME = 'name'
     RANDOM_VALUE_FUNC = 'rand_func'
     COLUMN_WIDTH = 'col_width'
@@ -91,14 +91,14 @@ class ExcellGenTools:
     COLUMNS = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 
     @classmethod
-    def get_column_width(cls, atr):
-        if atr in cls.ATTRS:
-            return cls.ATTRS[atr][cls.COLUMN_WIDTH]
-        return cls.PRODUCTS[atr][cls.COLUMN_WIDTH]
+    def get_column_width(cls, attr):
+        if attr in cls.ATTRS:
+            return cls.ATTRS[attr][cls.COLUMN_WIDTH]
+        return cls.PRODUCTS[attr][cls.COLUMN_WIDTH]
 
     @classmethod
     def get_attribute_list(cls, category):
-        return cls.CATEGORIES[category][cls.ATRIBUT_LIST]
+        return cls.CATEGORIES[category][cls.ATTRIBUT_LIST]
 
     @classmethod
     def get_article(cls):
@@ -120,9 +120,9 @@ class ExcellGenTools:
 
     @classmethod
     def get_price(cls):
-        return "{:.2f}$".format(random.randint(19999, 129999) / 100)
+        return "${:.2f}".format(random.randint(19999, 129999) / 100)
 
     @classmethod
-    def get_atribute_value(cls, atr):
-        return cls.ATTRS[atr][cls.RANDOM_VALUE_FUNC]()
+    def get_attribute_value(cls, attr):
+        return cls.ATTRS[attr][cls.RANDOM_VALUE_FUNC]()
 

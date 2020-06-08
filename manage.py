@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 import sys
 
-from src.core.settings import ACTIONS
+from src.core.settings import ACTIONS, BASE_DIR
 from src.core.args import args_parser
+
+sys.path.append(BASE_DIR)
 
 def main():
     print('Python v', sys.version, sep='')
