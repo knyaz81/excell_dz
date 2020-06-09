@@ -170,3 +170,11 @@ class DataBase:
                     'attribute_value': adv_attrs[attr_id],
                 }
             )
+
+    def pure_insert_bulk_products(self, cursor, products, adv_attrs):
+        query_product = """INSERT INTO products(category_id, brand_id, product_code, name, price)
+                        VALUES(%(category_id)s, %(brand_id)s, %(article)s, %(name)s, %(price)s)"""
+        query_add_prod_attrs = """INSERT INTO product_attributes(product_code, attribute_id, attribute_value)
+                              VALUES(%(article)s, %(attribute_id)s, %(attribute_value)s)"""
+        cursor.executemany(query_product, products)
+        cursor.executemany(query_add_prod_attrs, adv_attrs)

@@ -20,3 +20,7 @@ args_parser.add_argument(
     '-r', '--rows', type=int, default=40,
     help='Rows products per category in xlsx document, default 40'
 )
+args_parser.add_argument(
+    '-b', '--bulk', type=bool, default=False, nargs='?', const=True,
+    help='Write bulk data to SQL BD'
+)
