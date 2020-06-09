@@ -3,7 +3,7 @@ import os.path
 ## Program modes
 ACTIONS = [
     'generate',
-    'parse_excell',
+    'parse',
 ]
 
 BASE_DIR = os.path.dirname(

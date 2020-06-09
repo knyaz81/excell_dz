@@ -17,10 +17,12 @@ class XLSXParser:
         self.database.init_db()
         self.database.create_tables()
 
+        overall_start = time()
         for sheet in self.worksheets:
             start = time()
             self._parser_category_sheet(sheet)
-            print(f'PARSE category "{sheet.title} DONE in {(time()-start):.3f}sec"')
+            print(f'PARSE category "{sheet.title} DONE in {(time()-start):.3f}sec"\n')
+        print(f'DOCUMENT PARSE DONE in {(time()-overall_start):3f}sec')
 
     def _parser_category_sheet(self, sheet):
         category_id = self.database.insert_category(sheet.title)
