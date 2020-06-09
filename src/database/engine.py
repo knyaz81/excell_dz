@@ -53,7 +53,6 @@ class PostgreSQL:
             """,
             """
             CREATE TABLE products (
-                product_id SERIAL PRIMARY KEY,
                 category_id INTEGER NOT NULL,
                 brand_id INTEGER NOT NULL,
                 FOREIGN KEY (category_id)
@@ -62,7 +61,7 @@ class PostgreSQL:
                 FOREIGN KEY (brand_id)
                     REFERENCES brands (brand_id)
                     ON DELETE CASCADE,
-                article VARCHAR(255) UNIQUE,
+                product_code CHAR(10) PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
                 price MONEY
             )
@@ -75,11 +74,11 @@ class PostgreSQL:
             """,
             """
             CREATE TABLE product_attributes (
-                product_id INTEGER NOT NULL,
+                product_code CHAR(10) NOT NULL,
                 attribute_id INTEGER NOT NULL,
-                PRIMARY KEY (product_id, attribute_id),
-                FOREIGN KEY (product_id)
-                    REFERENCES products (product_id)
+                PRIMARY KEY (product_code, attribute_id),
+                FOREIGN KEY (product_code)
+                    REFERENCES products (product_code)
                     ON DELETE CASCADE,
                 FOREIGN KEY (attribute_id)
                     REFERENCES attributes (attribute_id)
@@ -129,21 +128,45 @@ class DataBase:
             except (Exception, DatabaseError)as error:
                 print(f'Error: {error}')
             else:
-                print("Create tables successfully...")
+                print("CREATE TABLES successfully...")
 
-    def insert_categories(self, categories_list):
-        query = "INSERT INTO categories(category_name) VALUES (%s)"
+    def insert_category(self, category):
+        query = """INSERT INTO categories(category_name)
+                VALUES(%s) RETURNING category_id"""
         with self as cursor:
-            try:
-                cursor.executemany(query, categories_list)
-            except (Exception, DatabaseError)as error:
-                print(f'Error: {error}')
-            else:
-                print("Insert categories successfully...")
+            cursor.execute(query, (category,))
+            category_id = cursor.fetchone()[0]
+            print(f'INSERT category "{category}" successfully...')
+        return category_id
 
+    def insert_product_attr(self, attr):
+        query = """INSERT INTO attributes(attribute_name)
+                VALUES(%s) RETURNING attribute_id"""
+        with self as cursor:
+            cursor.execute(query, (attr,))
+            attr_id = cursor.fetchone()[0]
+        return attr_id
 
-    
+    def insert_brand(self, brand):
+        query = """INSERT INTO brands(brand_name)
+                VALUES(%s) RETURNING brand_id"""
+        with self as cursor:
+            cursor.execute(query, (brand,))
+            brand_id = cursor.fetchone()[0]
+        return brand_id
 
-
-
-
+    def pure_insert_product(self, cursor, product, adv_attrs):
+        query_product = """INSERT INTO products(category_id, brand_id, product_code, name, price)
+                        VALUES(%(category_id)s, %(brand_id)s, %(article)s, %(name)s, %(price)s)"""
+        query_add_prod_attr = """INSERT INTO product_attributes(product_code, attribute_id, attribute_value)
+                              VALUES(%(article)s, %(attribute_id)s, %(attribute_value)s)"""
+        cursor.execute(query_product, product)
+        for attr_id in adv_attrs:
+            cursor.execute(
+                query_add_prod_attr,
+                {
+                    'article': product['article'],
+                    'attribute_id': attr_id,
+                    'attribute_value': adv_attrs[attr_id],
+                }
+            )
