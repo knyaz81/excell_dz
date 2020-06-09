@@ -129,7 +129,7 @@ class DataBase:
             except (Exception, DatabaseError)as error:
                 print(f'Error: {error}')
             else:
-                print("Create tablse successfully!")
+                print("Create tables successfully...")
 
     def insert_categories(self, categories_list):
         query = "INSERT INTO categories(category_name) VALUES (%s)"
@@ -139,7 +139,7 @@ class DataBase:
             except (Exception, DatabaseError)as error:
                 print(f'Error: {error}')
             else:
-                print("Insert categories successfully!")
+                print("Insert categories successfully...")
 
 
     

@@ -12,7 +12,7 @@ BASE_DIR = os.path.dirname(
     )
 )
 
-## Postgres config
+## Postgres
 DB_CONFIG = {
     'USER': 'excellparser',
     'PASSWORD': 'excellparser',
