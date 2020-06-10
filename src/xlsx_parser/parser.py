@@ -1,6 +1,7 @@
 from time import time
 import openpyxl
 
+from async_parser.starter import run
 from database.engine import DataBase
 
 class XLSXParser:
@@ -16,6 +17,9 @@ class XLSXParser:
 
         self.database.init_db()
         self.database.create_tables()
+
+        if self.cli_args.with_async:
+            return run(cli_args)
 
         overall_start = time()
         for sheet in self.worksheets:

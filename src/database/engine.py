@@ -1,4 +1,5 @@
 from psycopg2 import connect, extensions, DatabaseError
+import asyncpg
 
 from core.settings import DB_CONFIG
 
@@ -48,7 +49,7 @@ class PostgreSQL:
             """
             CREATE TABLE brands (
                 brand_id SERIAL PRIMARY KEY,
-                brand_name VARCHAR(255) NOT NULL
+                brand_name VARCHAR(255) UNIQUE
             )
             """,
             """
@@ -178,3 +179,46 @@ class DataBase:
                               VALUES(%(article)s, %(attribute_id)s, %(attribute_value)s)"""
         cursor.executemany(query_product, products)
         cursor.executemany(query_add_prod_attrs, adv_attrs)
+ 
+
+class AsyncPostgreSQL:
+
+    def __init__(self):
+        self.connect_params = {
+            'user': DB_CONFIG['USER'],
+            'password': DB_CONFIG['PASSWORD'],
+            'database': DB_CONFIG['NAME'],
+            'host': DB_CONFIG['HOST'],
+            'port': DB_CONFIG['PORT'],
+        }
+        self.connection = None
+
+    async def __aenter__(self):
+        if self.connection is None:
+            self.connection = await asyncpg.connect(**self.connect_params)
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if  self.connection is not None:
+            await self.connection.close()
+            self.connection = None
+
+    async def insert_category(self, category):
+        return await self.connection.fetchval("""
+        INSERT INTO categories (category_name)
+        VALUES ($1)
+        RETURNING category_id""", category)
+
+    async def insert_brand(self, brand):
+        return await self.connection.fetchval("""
+        INSERT INTO brands (brand_name)
+        VALUES ($1)
+        RETURNING brand_id""", brand)
+
+    async def insert_attribute(self, attribute):
+        return await self.connection.fetchval("""
+        INSERT INTO attributes (attribute_name)
+        VALUES ($1)
+        RETURNING attribute_id""", attribute)
+
+    def get_values_placeholder(self, values, first=1):
+        return (f'${i}' for i in range(first, len(values)+first))
