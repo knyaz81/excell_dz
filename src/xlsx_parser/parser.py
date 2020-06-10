@@ -18,7 +18,7 @@ class XLSXParser:
         self.database.init_db()
         self.database.create_tables()
 
-        if self.cli_args.with_async:
+        if self.cli_args.withasync:
             return run(cli_args)
 
         overall_start = time()
@@ -26,7 +26,7 @@ class XLSXParser:
             start = time()
             self._parser_category_sheet(sheet)
             print(f'PARSE category "{sheet.title} DONE in {(time()-start):.3f}sec"\n')
-        print(f'DOCUMENT PARSE DONE in {(time()-overall_start):3f}sec')
+        print(f'DOCUMENT PARSE DONE in {(time()-overall_start):.3f}sec')
 
     def _parser_category_sheet(self, sheet):
         category_id = self.database.insert_category(sheet.title)

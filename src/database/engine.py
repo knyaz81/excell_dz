@@ -202,23 +202,21 @@ class AsyncPostgreSQL:
             await self.connection.close()
             self.connection = None
 
-    async def insert_category(self, category):
-        return await self.connection.fetchval("""
-        INSERT INTO categories (category_name)
-        VALUES ($1)
-        RETURNING category_id""", category)
+    async def create(self, tablename, fields, values, return_value=None):
+        sql_query = (
+        f'INSERT INTO {tablename} ({", ".join(fields)}) '
+        f'VALUES ({", ".join(self.get_values_placeholder(fields))}) '
+        )
+        if return_value:
+            sql_query += f'RETURNING {return_value}'
+        return await self.connection.fetchval(sql_query, *values)
 
-    async def insert_brand(self, brand):
-        return await self.connection.fetchval("""
-        INSERT INTO brands (brand_name)
-        VALUES ($1)
-        RETURNING brand_id""", brand)
-
-    async def insert_attribute(self, attribute):
-        return await self.connection.fetchval("""
-        INSERT INTO attributes (attribute_name)
-        VALUES ($1)
-        RETURNING attribute_id""", attribute)
+    async def bulk_create(self, tablename, fields, values_list):
+        sql_query = (
+            f'INSERT INTO {tablename} ({", ".join(fields)})'
+            f'VALUES ({", ".join(self.get_values_placeholder(fields))})'
+        )
+        await self.connection.executemany(sql_query, values_list)
 
     def get_values_placeholder(self, values, first=1):
         return (f'${i}' for i in range(first, len(values)+first))

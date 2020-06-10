@@ -25,6 +25,6 @@ args_parser.add_argument(
     help='Write bulk data to SQL BD'
 )
 args_parser.add_argument(
-    '-w', '--with_async', type=bool, default=False, nargs='?', const=True,
+    '-w', '--withasync', type=bool, default=False, nargs='?', const=True,
     help='Write bulk data to SQL BD with asyncio'
 )
