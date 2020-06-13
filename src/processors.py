@@ -1,9 +1,12 @@
+import asyncio
 from itertools import count as iter_count
 from io import StringIO
 from time import time
 
+from aiojobs import create_scheduler
+
 from src.parser import XLSXParser
-from src.database import DataBase
+from src.database import DataBase, AsyncDataBase
 from src.core.settings import (
     CATEGORY_FIELDS,
     BRANDS_FIELDS,
@@ -15,25 +18,23 @@ from src.core.settings import (
     TABLENAME_BRANDS,
     TABLENAME_PRODUCTS,
     TABLENAME_PRODUCT_ATTRIBUTES,
+    MAX_DB_CONNECTION,
 )
 
+PRODUCT_BRAND_INDEX = 1
+PRODUCT_CODE_INDEX = 0
+PRODUCT_NAME_INDEX = 2
+PRODUCT_PRICE_INDEX = 3
+
 class CommonProcessor:
-
-    PRODUCT_BRAND_INDEX = 1
-    PRODUCT_CODE_INDEX = 0
-    PRODUCT_NAME_INDEX = 2
-    PRODUCT_PRICE_INDEX = 3
-
-
     def __init__(self, filename, copy_from):
         self.parser = XLSXParser(filename)
-        self.db = DataBase()
         self.copy_from = copy_from
-
-    def run_process(self):
+        self.db = DataBase()
         self.db.init_db()
         self.db.create_tables()
 
+    def run_process(self):
         overall_start_time = time()
         self.categories = {
             category: id for category, id in zip(self.parser.parse_categories_names(), iter_count(start=1))
@@ -102,21 +103,21 @@ class CommonProcessor:
         brand_id_gen = iter_count(start=1)
         for product_values in self.parser.generator_parse_proructs_row(category):
 
-            if product_values[self.PRODUCT_BRAND_INDEX] not in self.brands:
-                self.brands[product_values[self.PRODUCT_BRAND_INDEX]] = next(brand_id_gen)
+            if product_values[PRODUCT_BRAND_INDEX] not in self.brands:
+                self.brands[product_values[PRODUCT_BRAND_INDEX]] = next(brand_id_gen)
 
             product = (
                 self.categories[category],
-                self.brands[product_values[self.PRODUCT_BRAND_INDEX]],
-                product_values[self.PRODUCT_CODE_INDEX],
-                product_values[self.PRODUCT_NAME_INDEX],
-                product_values[self.PRODUCT_PRICE_INDEX],
+                self.brands[product_values[PRODUCT_BRAND_INDEX]],
+                product_values[PRODUCT_CODE_INDEX],
+                product_values[PRODUCT_NAME_INDEX],
+                product_values[PRODUCT_PRICE_INDEX],
             )
             self.products.append(product)
 
             for i, prod_values_idx in enumerate(range(4, len(product_values))):
                 prod_attribute = (
-                    product_values[self.PRODUCT_CODE_INDEX],
+                    product_values[PRODUCT_CODE_INDEX],
                     self.attributes[attribute_names[i]],
                     product_values[prod_values_idx] 
                 )
@@ -127,35 +128,147 @@ class CommonProcessor:
         brand_id_gen = iter_count(start=1)
         for product_values in self.parser.generator_parse_proructs_row(category):
 
-            if product_values[self.PRODUCT_BRAND_INDEX] not in self.brands:
-                self.brands[product_values[self.PRODUCT_BRAND_INDEX]] = next(brand_id_gen)
+            if product_values[PRODUCT_BRAND_INDEX] not in self.brands:
+                self.brands[product_values[PRODUCT_BRAND_INDEX]] = next(brand_id_gen)
 
             self.prods_file_obj.write(
                 "{}\t{}\t{}\t{}\t{}\n".format(
                     self.categories[category],
-                    self.brands[product_values[self.PRODUCT_BRAND_INDEX]],
-                    product_values[self.PRODUCT_CODE_INDEX],
-                    product_values[self.PRODUCT_NAME_INDEX],
-                    product_values[self.PRODUCT_PRICE_INDEX],
+                    self.brands[product_values[PRODUCT_BRAND_INDEX]],
+                    product_values[PRODUCT_CODE_INDEX],
+                    product_values[PRODUCT_NAME_INDEX],
+                    product_values[PRODUCT_PRICE_INDEX],
                 )
             )
 
             for i, prod_values_idx in enumerate(range(4, len(product_values))):
                 self.prod_attrs_file_obj.write(
                     "{}\t{}\t{}\n".format(
-                        product_values[self.PRODUCT_CODE_INDEX],
+                        product_values[PRODUCT_CODE_INDEX],
                         self.attributes[attribute_names[i]],
                         product_values[prod_values_idx]
                     )
                 )
 
 
-
-
-def runner(cli_args):
-    processor = CommonProcessor(cli_args.file, cli_args.copyfrom)
-    processor.run_process()
-
-
 class AsyncProcessor:
-    pass
+
+    CHUNK_READ_RAWS = 250
+
+    def __init__(self, filename, loop):
+        self.loop = loop
+        self.parser = XLSXParser(filename)
+        self.sync_db = DataBase()
+        self.sync_db.init_db()
+        self.sync_db.create_tables()
+
+
+    async def run_process(self):
+        self.scheduler = await create_scheduler(limit=MAX_DB_CONNECTION)
+
+        self.categories = {
+            category: id for category, id in zip(
+                self.parser.parse_categories_names(), iter_count(start=1)
+            )
+        }
+        self.attributes = {
+            attribute: id for attribute, id in zip(
+                self.parser.parse_addvanced_attributes_names(), iter_count(start=1)
+            )
+        }
+        self.brands = {}
+
+        await self.scheduler.spawn(
+            self._simple_bulk_create(
+                TABLENAME_CATEGORIES,
+                CATEGORY_FIELDS,
+                self.categories
+            )
+        )
+        await self.scheduler.spawn(
+            self._simple_bulk_create(
+                TABLENAME_ATTRIBUTES,
+                ATTRIBUTE_FIELDS,
+                self.attributes
+            )
+        )
+
+        await asyncio.gather(*[self.parse_category(category) for category in self.categories])
+
+        pending = asyncio.Task.all_tasks()
+        await asyncio.gather(*pending)
+
+    async def parse_category(self, category):
+            products = []
+            advanced_attributes = []
+            attribute_names = self.parser.get_adv_attrs_by_category(category)
+            brand_id_gen = iter_count(start=1)
+            for row_quantity, product_values in enumerate(self.parser.generator_parse_proructs_row(category), start=1):
+
+                brand_name = product_values[PRODUCT_BRAND_INDEX]             
+                if brand_name not in self.brands:
+                    self.brands[brand_name] = next(brand_id_gen)
+                    await self._simple_create(
+                        TABLENAME_BRANDS,
+                        BRANDS_FIELDS,
+                        (self.brands[brand_name], brand_name)
+                    )
+                products.append(
+                    (
+                        self.categories[category],
+                        self.brands[brand_name],
+                        product_values[PRODUCT_CODE_INDEX],
+                        product_values[PRODUCT_NAME_INDEX],
+                        product_values[PRODUCT_PRICE_INDEX],
+                    )
+                )
+                for i, prod_values_idx in enumerate(range(4, len(product_values))):
+                    prod_attribute = (
+                        product_values[PRODUCT_CODE_INDEX],
+                        self.attributes[attribute_names[i]],
+                        product_values[prod_values_idx] 
+                    )
+                    advanced_attributes.append(prod_attribute)
+
+                if not row_quantity % self.CHUNK_READ_RAWS:
+                    await self.scheduler.spawn(
+                        self._create_products_and_attrs(products, advanced_attributes)
+                    )
+                    products = []
+                    advanced_attributes = []
+            if products and advanced_attributes:
+                await self.scheduler.spawn(
+                    self._create_products_and_attrs(products, advanced_attributes)
+                )
+
+    async def _simple_bulk_create(self, tablename, fields, values_dict):
+        database = AsyncDataBase()
+        async with database:
+            await database.bulk_create(
+                tablename,
+                fields,
+                [(values_dict[name], name) for name in values_dict]
+            )
+
+    async def _simple_create(self, tablename, fields, values):
+        database = AsyncDataBase()
+        async with database:
+            await database.create(
+                tablename,
+                fields,
+                values
+            )
+
+    async def _create_products_and_attrs(self, products, attributes):
+        database = AsyncDataBase()
+        async with database:
+            await database.bulk_create(
+                TABLENAME_PRODUCTS,
+                PRODUCT_FIELDS,
+                products
+            )
+            await database.bulk_create(
+                TABLENAME_PRODUCT_ATTRIBUTES,
+                PRODUCT_ATTRIBUTE_FIELDS,
+                attributes
+            )

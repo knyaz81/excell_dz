@@ -1,5 +1,5 @@
-from src.excell_gen.starter import GeneratorXLSX
-from src.processors import runner
+from src.fake_data_gen.starter import GeneratorXLSX
+from src.starter import runner
 
 PROGRAM_ACTIONS = {
     'generate': GeneratorXLSX(),

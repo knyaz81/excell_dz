@@ -21,6 +21,7 @@ DB_CONFIG = {
     'HOST': 'localhost',
     'PORT': 5433,
 }
+MAX_DB_CONNECTION = 10
 
 ## Database contstants
 CATEGORY_FIELDS = ['category_id', 'category_name']

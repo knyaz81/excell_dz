@@ -178,8 +178,9 @@ class AsyncDataBase:
 
     async def create(self, tablename, fields, values, return_value=None):
         sql_query = (
-        f'INSERT INTO {tablename} ({", ".join(fields)}) '
-        f'VALUES ({", ".join(self.get_values_placeholder(fields))}) '
+            f'INSERT INTO {tablename} ({", ".join(fields)}) '
+            f'VALUES ({", ".join(self.get_values_placeholder(fields))}) '
+            'ON CONFLICT DO NOTHING'
         )
         if return_value:
             sql_query += f'RETURNING {return_value}'
