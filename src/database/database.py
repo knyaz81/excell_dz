@@ -152,7 +152,7 @@ class DataBase:
 
     def create_from_file(self, tablename, fields, file_obj):
         with self as cursor:
-            cursor.copy_from(file_obj, tablename, columns=fields)
+            cursor.copy_from(file_obj, tablename, columns=fields, size=pow(2, 16))
  
 
 class AsyncDataBase:
