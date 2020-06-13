@@ -149,6 +149,10 @@ class DataBase:
         )
         with self as cursor:
             cursor.executemany(sql_query, values_list)
+
+    def create_from_file(self, tablename, fields, file_obj):
+        with self as cursor:
+            cursor.copy_from(file_obj, tablename, columns=fields)
  
 
 class AsyncDataBase:

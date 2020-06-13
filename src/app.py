@@ -1,5 +1,4 @@
 from src.excell_gen.starter import GeneratorXLSX
-from src.parser import XLSXParser
 from src.processors import runner
 
 PROGRAM_ACTIONS = {

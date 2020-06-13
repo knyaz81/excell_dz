@@ -21,8 +21,8 @@ args_parser.add_argument(
     help='Rows products per category in xlsx document, default 40'
 )
 args_parser.add_argument(
-    '-b', '--bulk', type=bool, default=False, nargs='?', const=True,
-    help='Write bulk data to SQL BD'
+    '-c', '--copyfrom', type=bool, default=False, nargs='?', const=True,
+    help='Write method in SQL DB "COPY FROM"'
 )
 args_parser.add_argument(
     '-w', '--withasync', type=bool, default=False, nargs='?', const=True,
