@@ -1,9 +1,10 @@
-from excell_gen.starter import GeneratorXLSX
-from xlsx_parser.parser import XLSXParser
+from src.excell_gen.starter import GeneratorXLSX
+from src.parser import XLSXParser
+from src.processors import runner
 
 PROGRAM_ACTIONS = {
     'generate': GeneratorXLSX(),
-    'parse' : XLSXParser(),
+    'parse' : runner,
 }
 
 

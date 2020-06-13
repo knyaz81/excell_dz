@@ -21,3 +21,16 @@ DB_CONFIG = {
     'HOST': 'localhost',
     'PORT': 5433,
 }
+
+## Database contstants
+CATEGORY_FIELDS = ['category_id', 'category_name']
+BRANDS_FIELDS = ['brand_id', 'brand_name']
+ATTRIBUTE_FIELDS = ['attribute_id', 'attribute_name']
+PRODUCT_FIELDS = ['category_id', 'brand_id', 'product_code', 'name', 'price']
+PRODUCT_ATTRIBUTE_FIELDS = ['product_code', 'attribute_id', 'attribute_value']
+
+TABLENAME_CATEGORIES = 'categories'
+TABLENAME_ATTRIBUTES = 'attributes'
+TABLENAME_BRANDS = 'brands'
+TABLENAME_PRODUCTS = 'products'
+TABLENAME_PRODUCT_ATTRIBUTES = 'product_attributes'
