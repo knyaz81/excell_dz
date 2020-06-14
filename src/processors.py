@@ -177,6 +177,7 @@ class AsyncProcessor:
             )
         }
         self.brands = {}
+        self.brand_id_gen = iter_count(start=1)
 
         await self.scheduler.spawn(
             self._simple_bulk_create(
@@ -202,13 +203,12 @@ class AsyncProcessor:
             products = []
             advanced_attributes = []
             attribute_names = self.parser.get_adv_attrs_by_category(category)
-            brand_id_gen = iter_count(start=1)
             for row_quantity, product_values in enumerate(self.parser.generator_parse_proructs_row(category), start=1):
 
                 brand_name = product_values[PRODUCT_BRAND_INDEX]             
                 if brand_name not in self.brands:
-                    self.brands[brand_name] = next(brand_id_gen)
-                    await self._simple_create(
+                    self.brands[brand_name] = next(self.brand_id_gen)
+                    self.sync_db.create(
                         TABLENAME_BRANDS,
                         BRANDS_FIELDS,
                         (self.brands[brand_name], brand_name)

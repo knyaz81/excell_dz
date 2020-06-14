@@ -142,10 +142,18 @@ class DataBase:
                 cursor.execute(query)
             print("CREATE TABLES successfully...")
 
+    def create(self, tablename, fields, values):
+        sql_query = (
+            f'INSERT INTO {tablename} ({", ".join(fields)}) '
+            f'VALUES ({", ".join(["%s" for _ in range(len(fields))])})'
+        )
+        with self as cursor:
+            cursor.execute(sql_query, values)
+
     def bulk_create(self, tablename, fields, values_list):
         sql_query = (
-        f'INSERT INTO {tablename} ({", ".join(fields)}) '
-        f'VALUES ({", ".join(["%s" for _ in range(len(fields))])})'
+            f'INSERT INTO {tablename} ({", ".join(fields)}) '
+            f'VALUES ({", ".join(["%s" for _ in range(len(fields))])})'
         )
         with self as cursor:
             cursor.executemany(sql_query, values_list)
@@ -180,7 +188,6 @@ class AsyncDataBase:
         sql_query = (
             f'INSERT INTO {tablename} ({", ".join(fields)}) '
             f'VALUES ({", ".join(self.get_values_placeholder(fields))}) '
-            'ON CONFLICT DO NOTHING'
         )
         if return_value:
             sql_query += f'RETURNING {return_value}'
