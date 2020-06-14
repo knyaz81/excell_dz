@@ -194,11 +194,7 @@ class AsyncDataBase:
         return await self.connection.fetchval(sql_query, *values)
 
     async def bulk_create(self, tablename, fields, values_list):
-        sql_query = (
-            f'INSERT INTO {tablename} ({", ".join(fields)})'
-            f'VALUES ({", ".join(self.get_values_placeholder(fields))})'
-        )
-        await self.connection.executemany(sql_query, values_list)
+        await self.connection.copy_records_to_table(tablename, records=values_list, columns=fields)
 
     def get_values_placeholder(self, values, first=1):
         return (f'${i}' for i in range(first, len(values)+first))

@@ -208,7 +208,7 @@ class AsyncProcessor:
                 brand_name = product_values[PRODUCT_BRAND_INDEX]             
                 if brand_name not in self.brands:
                     self.brands[brand_name] = next(self.brand_id_gen)
-                    self.sync_db.create(
+                    await self._simple_create(
                         TABLENAME_BRANDS,
                         BRANDS_FIELDS,
                         (self.brands[brand_name], brand_name)
