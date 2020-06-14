@@ -3,8 +3,6 @@ from itertools import count as iter_count
 from io import StringIO
 from time import time
 
-from aiojobs import create_scheduler
-
 from src.parser import XLSXParser
 from src.database import DataBase, AsyncDataBase
 from src.core.settings import (
@@ -151,6 +149,7 @@ class CommonProcessor:
 class AsyncProcessor:
 
     CHUNK_READ_RAWS = 250
+    SEMAPHORE = asyncio.Semaphore(MAX_DB_CONNECTION)
 
     def __init__(self, filename, loop):
         self.loop = loop
@@ -161,8 +160,6 @@ class AsyncProcessor:
 
 
     async def run_process(self):
-        self.scheduler = await create_scheduler(limit=MAX_DB_CONNECTION)
-
         self.categories = {
             category: id for category, id in zip(
                 self.parser.parse_categories_names(), iter_count(start=1)
@@ -179,21 +176,17 @@ class AsyncProcessor:
             )
         }
 
-        await self.scheduler.spawn(
+        await asyncio.gather(
             self._simple_bulk_create(
                 TABLENAME_CATEGORIES,
                 CATEGORY_FIELDS,
                 self.categories
-            )
-        )
-        await self.scheduler.spawn(
+            ),
             self._simple_bulk_create(
                 TABLENAME_ATTRIBUTES,
                 ATTRIBUTE_FIELDS,
                 self.attributes
-            )
-        )
-        await self.scheduler.spawn(
+            ),
             self._simple_bulk_create(
                 TABLENAME_BRANDS,
                 BRANDS_FIELDS,
@@ -203,14 +196,15 @@ class AsyncProcessor:
 
         await asyncio.gather(*[self.parse_category(category) for category in self.categories])
 
-        pending = asyncio.Task.all_tasks()
-        await asyncio.gather(*pending)
+        self.loop.stop()
 
     async def parse_category(self, category):
             products = []
             advanced_attributes = []
             attribute_names = self.parser.get_adv_attrs_by_category(category)
-            for row_quantity, product_values in enumerate(self.parser.generator_parse_proructs_row(category), start=1):
+            for rows_quantity, product_values in enumerate(
+                self.parser.generator_parse_proructs_row(category), start=1
+            ):
                 brand_name = product_values[PRODUCT_BRAND_INDEX]             
                 products.append(
                     (
@@ -222,52 +216,41 @@ class AsyncProcessor:
                     )
                 )
                 for i, prod_values_idx in enumerate(range(4, len(product_values))):
-                    prod_attribute = (
-                        product_values[PRODUCT_CODE_INDEX],
-                        self.attributes[attribute_names[i]],
-                        product_values[prod_values_idx] 
+                    advanced_attributes.append(
+                        (
+                            product_values[PRODUCT_CODE_INDEX],
+                            self.attributes[attribute_names[i]],
+                            product_values[prod_values_idx]
+                        )
                     )
-                    advanced_attributes.append(prod_attribute)
-
-                if not row_quantity % self.CHUNK_READ_RAWS:
-                    await self.scheduler.spawn(
-                        self._create_products_and_attrs(products, advanced_attributes)
-                    )
+                if not (rows_quantity % self.CHUNK_READ_RAWS):
+                    self.loop.create_task(self._create_products_and_attrs(products, advanced_attributes))
                     products = []
                     advanced_attributes = []
-            if products and advanced_attributes:
-                await self.scheduler.spawn(
-                    self._create_products_and_attrs(products, advanced_attributes)
-                )
+            if products or attribute_names:
+                await self._create_products_and_attrs(products, advanced_attributes)
 
     async def _simple_bulk_create(self, tablename, fields, values_dict):
-        database = AsyncDataBase()
-        async with database:
-            await database.bulk_create(
-                tablename,
-                fields,
-                [(values_dict[name], name) for name in values_dict]
-            )
+        async with self.SEMAPHORE:
+            database = AsyncDataBase()
+            async with database:
+                await database.bulk_create(
+                    tablename,
+                    fields,
+                    [(values_dict[name], name) for name in values_dict]
+                )
 
-    async def _simple_create(self, tablename, fields, values):
-        database = AsyncDataBase()
-        async with database:
-            await database.create(
-                tablename,
-                fields,
-                values
-            )
-
-    async def _create_products_and_attrs(self, products, attributes):
-        database = AsyncDataBase()
-        async with database:
-            await database.bulk_create(
-                TABLENAME_PRODUCTS,
-                PRODUCT_FIELDS,
-                products
-            )
-            await database.bulk_create(
-                TABLENAME_PRODUCT_ATTRIBUTES,
-                PRODUCT_ATTRIBUTE_FIELDS,
-                attributes
-            )
+    async def _create_products_and_attrs(self, products, advanced_attributes):
+        async with self.SEMAPHORE:
+            database = AsyncDataBase()
+            async with database:
+                await database.bulk_create(
+                    TABLENAME_PRODUCTS,
+                    PRODUCT_FIELDS,
+                    products
+                )
+                await database.bulk_create(
+                    TABLENAME_PRODUCT_ATTRIBUTES,
+                    PRODUCT_ATTRIBUTE_FIELDS,
+                    advanced_attributes
+                )
