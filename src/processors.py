@@ -37,12 +37,20 @@ class CommonProcessor:
     def run_process(self):
         overall_start_time = time()
         self.categories = {
-            category: id for category, id in zip(self.parser.parse_categories_names(), iter_count(start=1))
+            category: id for category, id in zip(
+                self.parser.parse_categories_names(), iter_count(start=1)
+            )
         }
         self.attributes = {
-            attribute: id for attribute, id in zip(self.parser.parse_addvanced_attributes_names(), iter_count(start=1))
+            attribute: id for attribute, id in zip(
+                self.parser.parse_addvanced_attributes_names(), iter_count(start=1)
+            )
         }
-        self.brands = {}
+        self.brands = {
+            brand: id for brand, id in zip(
+                self.parser.parse_brands_names(), iter_count(start=1)
+            )
+        }
 
         self.db.bulk_create(
             TABLENAME_CATEGORIES,
@@ -53,6 +61,11 @@ class CommonProcessor:
             TABLENAME_ATTRIBUTES,
             ATTRIBUTE_FIELDS,
             [(self.attributes[attribute], attribute) for attribute in self.attributes]
+        )
+        self.db.bulk_create(
+            TABLENAME_BRANDS,
+            BRANDS_FIELDS,
+            [(self.brands[brand], brand) for brand in self.brands]
         )
 
         if self.copy_from:
@@ -65,12 +78,6 @@ class CommonProcessor:
             self.product_attributes = []
             for category in self.categories:
                 self._fill_products_and_attrs_values_list(category)
-
-        self.db.bulk_create(
-            TABLENAME_BRANDS,
-            BRANDS_FIELDS,
-            [(self.brands[brand], brand) for brand in self.brands]
-        )
 
         writing_start_time = time()
         if self.copy_from:
@@ -100,12 +107,7 @@ class CommonProcessor:
 
     def _fill_products_and_attrs_values_list(self, category):
         attribute_names = self.parser.get_adv_attrs_by_category(category)
-        brand_id_gen = iter_count(start=1)
         for product_values in self.parser.generator_parse_proructs_row(category):
-
-            if product_values[PRODUCT_BRAND_INDEX] not in self.brands:
-                self.brands[product_values[PRODUCT_BRAND_INDEX]] = next(brand_id_gen)
-
             product = (
                 self.categories[category],
                 self.brands[product_values[PRODUCT_BRAND_INDEX]],
@@ -125,12 +127,7 @@ class CommonProcessor:
 
     def _fill_prods_and_attrs_file_obj(self, category):
         attribute_names = self.parser.get_adv_attrs_by_category(category)
-        brand_id_gen = iter_count(start=1)
         for product_values in self.parser.generator_parse_proructs_row(category):
-
-            if product_values[PRODUCT_BRAND_INDEX] not in self.brands:
-                self.brands[product_values[PRODUCT_BRAND_INDEX]] = next(brand_id_gen)
-
             self.prods_file_obj.write(
                 "{}\t{}\t{}\t{}\t{}\n".format(
                     self.categories[category],
@@ -176,8 +173,11 @@ class AsyncProcessor:
                 self.parser.parse_addvanced_attributes_names(), iter_count(start=1)
             )
         }
-        self.brands = {}
-        self.brand_id_gen = iter_count(start=1)
+        self.brands = {
+            brand: id for brand, id in zip(
+                self.parser.parse_brands_names(), iter_count(start=1)
+            )
+        }
 
         await self.scheduler.spawn(
             self._simple_bulk_create(
@@ -193,6 +193,13 @@ class AsyncProcessor:
                 self.attributes
             )
         )
+        await self.scheduler.spawn(
+            self._simple_bulk_create(
+                TABLENAME_BRANDS,
+                BRANDS_FIELDS,
+                self.brands
+            )
+        )
 
         await asyncio.gather(*[self.parse_category(category) for category in self.categories])
 
@@ -204,15 +211,7 @@ class AsyncProcessor:
             advanced_attributes = []
             attribute_names = self.parser.get_adv_attrs_by_category(category)
             for row_quantity, product_values in enumerate(self.parser.generator_parse_proructs_row(category), start=1):
-
                 brand_name = product_values[PRODUCT_BRAND_INDEX]             
-                if brand_name not in self.brands:
-                    self.brands[brand_name] = next(self.brand_id_gen)
-                    await self._simple_create(
-                        TABLENAME_BRANDS,
-                        BRANDS_FIELDS,
-                        (self.brands[brand_name], brand_name)
-                    )
                 products.append(
                     (
                         self.categories[category],

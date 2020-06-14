@@ -196,5 +196,8 @@ class AsyncDataBase:
     async def bulk_create(self, tablename, fields, values_list):
         await self.connection.copy_records_to_table(tablename, records=values_list, columns=fields)
 
+    async def copy_to_table(self, tablename, fields, file_obj):
+        await self.connection.copy_to_table(tablename, source=file_obj, columns=fields)
+
     def get_values_placeholder(self, values, first=1):
         return (f'${i}' for i in range(first, len(values)+first))
